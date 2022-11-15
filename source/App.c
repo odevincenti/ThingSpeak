@@ -84,8 +84,6 @@ void App_Init (void)
 
 	// Inicializo LED
 	LedInit();
-	rgb_t color = {.red = true, .green = false, .blue = true};
-	LedRGB(color);
 
 	// Inicializo timers
 	timerInit();
@@ -117,15 +115,13 @@ void App_Run (void)
 				uint8_t check = checkRX();
 				if (check == IS_KEEPALIVE && keepalive_flag){
 					keepalive_flag = false;
-					rgb_t color = {.red = true, .green = false, .blue = true};
-					LedRGB(color);	
-					LedOn();
+					LedBlueOn();
 				} else if (check == IS_DATA && data_flag){
 					data_flag = false;
 					keepalive_flag = false;
-					rgb_t color = {.red = false, .green = true, .blue = false};
-					LedRGB(color);
-					LedOn();
+					LedGreenOn();
+				} else if (check == IS_FAIL && data_flag){
+					LedRedOn();
 				} else if (keepalive_flag) {
 					LedOff();
 				} else if (data_flag){
@@ -134,10 +130,10 @@ void App_Run (void)
 				state = state == CHECK_RX ? IDLE : state;
 			}
 			break;
-		case IDLE:
-			if (keepalive_flag || data_flag){
-				//state = state == IDLE ? CHECK_RX: state;
-			}
+		// case IDLE:
+		// 	if (keepalive_flag || data_flag){
+		// 		state = state == IDLE ? CHECK_RX: state;
+		// 	}
 		default:
 			break;
 	}	

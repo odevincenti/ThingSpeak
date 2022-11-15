@@ -85,6 +85,27 @@ void LedToggle(){
 	}
 }
 
+void LedRedOn(){
+	rgb.red = true;
+	rgb.green = false;
+	rgb.blue = false;
+	LedOn();
+}
+
+void LedGreenOn(){
+	rgb.red = false;
+	rgb.green = true;
+	rgb.blue = false;
+	LedOn();
+}
+
+void LedBlueOn(){
+	rgb.red = false;
+	rgb.green = false;
+	rgb.blue = true;
+	LedOn();
+}
+
 /*******************************************************************************
  *******************************************************************************
                         LOCAL FUNCTION DEFINITIONS
