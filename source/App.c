@@ -122,6 +122,7 @@ void App_Run (void)
 					LedGreenOn();
 				} else if (check == IS_FAIL && data_flag){
 					LedRedOn();
+					SendData();
 				} else if (keepalive_flag) {
 					LedOff();
 				} else if (data_flag){
