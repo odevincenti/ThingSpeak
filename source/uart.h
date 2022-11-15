@@ -21,10 +21,10 @@
  ******************************************************************************/
 
 #if defined(CPU_MK64FN1M0VLL12) || defined(CPU_MK64FX512VLL12)
-	#define UART_ID_N   5
+	#define UART_CANT_IDS   5
 #elif defined(CPU_MK64FN1M0CAJ12) || defined(CPU_MK64FN1M0VDC12) || defined(CPU_MK64FN1M0VLQ12) || defined(CPU_MK64FN1M0VMD12) || \
     defined(CPU_MK64FX512VDC12) || defined(CPU_MK64FX512VLQ12) || defined(CPU_MK64FX512VMD12)
-	#define UART_ID_N   6
+	#define UART_CANT_IDS   6
 #endif
 
 #define PARITY_YES		true
@@ -88,7 +88,7 @@ uint8_t uartGetRxMsgLength(uint8_t id);
  * @param cant Desired quantity of bytes to be pasted
  * @return Real quantity of pasted bytes
 */
-uint8_t uartReadMsg(uint8_t id, uint8_t* msg, uint8_t cant);
+uint8_t uartReadMsg(uint8_t id, char* msg, uint8_t cant);
 
 /**
  * @brief Write a message to be transmitted. Non-Blocking
@@ -97,7 +97,7 @@ uint8_t uartReadMsg(uint8_t id, uint8_t* msg, uint8_t cant);
  * @param cant Desired quantity of bytes to be transfered
  * @return Real quantity of bytes to be transfered
 */
-uint8_t uartWriteMsg(uint8_t id, uint8_t* msg, uint8_t cant);
+uint8_t uartWriteMsg(uint8_t id, const char* msg, uint8_t cant);
 
 /**
  * @brief Check if all bytes were transfered

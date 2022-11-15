@@ -4,3 +4,4 @@
 /Debug
 ThingSpeak_Test PE Debug.launch
 ThingSpeak_Test PE Release.launch
+/node_modules

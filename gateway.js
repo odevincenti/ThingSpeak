@@ -3,7 +3,7 @@
 /*******************************************************************/
 const baudRate = 1200;
 const serialPortName = 'COM4';  //REVISAR PUERTO CUANDO CONECTO!
-const thingSpeakAPIKey = "B9CU8OPILVJO2GTA";
+const thingSpeakAPIKey = "ZE3RLGJV0XL2A7BO";
 /*******************************************************************/
 
 

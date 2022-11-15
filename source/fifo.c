@@ -154,6 +154,10 @@ bool FIFO_PushToBuffer(fifo_id_t id, fifo_value_t data){
 #endif
         }
     }
+    else
+    {
+    	int i = 0;
+    }
 
     return FIFO_Array[id].is_buffer_full;       // Return buffer state
 }

@@ -20,15 +20,6 @@
 
 /***** BOARD defines **********************************************************/
 
-// On Board User LEDs
-
-#define PIN_LED_RED     PORTNUM2PIN(PB, 22)	  // PTB22
-#define PIN_LED_GREEN   PORTNUM2PIN(PE, 26)	  // PTE26
-#define PIN_LED_BLUE    PORTNUM2PIN(PB, 21)	  // PTB21
-#define LED_ACTIVE      LOW
-
-// PINES DIGITALES
-
 // KINETIS
 #define PTA0			PORTNUM2PIN(PA, 0)
 #define PTA1			PORTNUM2PIN(PA, 1)
