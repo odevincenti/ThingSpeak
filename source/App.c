@@ -35,11 +35,10 @@
 #define PISO3_IDX		10
 
 enum {IS_OK, IS_FAIL, IS_ERR, IS_DATA, IS_KEEPALIVE};
-enum {IDLE, KEEPALIVE_SEND, KEEPALIVE_CHECK, DATA_SEND, DATA_CHECK};
+enum {IDLE, KEEPALIVE_SEND, DATA_SEND, CHECK_RX};
 
 #define GET_MSBYTE(x)	((uint8_t) ((x) >> 8) )
 #define GET_LSBYTE(x)	((uint8_t) (x) )
-#define LSB_MASK		0x0F
 
 /*******************************************************************************
  * FUNCTION PROTOTYPES FOR PRIVATE FUNCTIONS WITH FILE LEVEL SCOPE
@@ -47,9 +46,8 @@ enum {IDLE, KEEPALIVE_SEND, KEEPALIVE_CHECK, DATA_SEND, DATA_CHECK};
 void Data_IRQ();
 void KeepAlive_IRQ();
 void SendData();
-uint8_t IsDataOk();
 void KeepAlive();
-uint8_t IsKeepAliveOk();
+uint8_t checkRX();
 
 /*******************************************************************************
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
@@ -64,6 +62,9 @@ static uint16_t piso3 = 30;
 
 static tim_id_t keepalive_timer;
 static tim_id_t data_timer;
+
+static bool keepalive_flag = false;
+static bool data_flag = false;
 
 static uint8_t state = IDLE;
 
@@ -103,38 +104,44 @@ void App_Run (void)
 	switch (state){
 		case KEEPALIVE_SEND:
 			KeepAlive();
-			state = state == KEEPALIVE_SEND ? KEEPALIVE_CHECK : state;
-			break;
-		case KEEPALIVE_CHECK:
-			if (uartIsTxMsgComplete(UART_ID)){
-				if (IsKeepAliveOk() == IS_OK){
-					LedOn();
-				} else {
-					LedOff();
-				}
-				state = state == KEEPALIVE_CHECK ? IDLE : state;
-			}
+			keepalive_flag = true;
+			state = state == KEEPALIVE_SEND ? CHECK_RX : state;
 			break;
 		case DATA_SEND:
 			SendData();
-			state = DATA_CHECK;
+			data_flag = true;
+			state = CHECK_RX;
 			break;
-		case DATA_CHECK:
+		case CHECK_RX:
 			if (uartIsTxMsgComplete(UART_ID)){
-				if (IsDataOk() != IS_OK){
-					//state = DATA_SEND;
-				} else {
+				uint8_t check = checkRX();
+				if (check == IS_KEEPALIVE && keepalive_flag){
+					keepalive_flag = false;
+					rgb_t color = {.red = true, .green = false, .blue = true};
+					LedRGB(color);	
+					LedOn();
+				} else if (check == IS_DATA && data_flag){
+					data_flag = false;
+					keepalive_flag = false;
 					rgb_t color = {.red = false, .green = true, .blue = false};
 					LedRGB(color);
+					LedOn();
+				} else if (keepalive_flag) {
+					LedOff();
+				} else if (data_flag){
+					SendData();
 				}
-				state = state == DATA_CHECK ? IDLE : state;
+				state = state == CHECK_RX ? IDLE : state;
 			}
 			break;
+		case IDLE:
+			if (keepalive_flag || data_flag){
+				//state = state == IDLE ? CHECK_RX: state;
+			}
 		default:
 			break;
 	}	
 }
-
 
 /*******************************************************************************
  *******************************************************************************
@@ -154,7 +161,11 @@ void SendData(){
 
 }
 
-uint8_t IsDataOk(){
+void KeepAlive(){
+	uartWriteMsg(UART_ID, (uint8_t*) &keepalive_msg[0], sizeof(keepalive_msg));
+}
+
+uint8_t checkRX(){
 	
 	uint8_t r = false;
 	uint8_t header_rx[HEADER_LEN];
@@ -162,15 +173,15 @@ uint8_t IsDataOk(){
 	uint8_t answer;
 
 	uartReadMsg(UART_ID, (uint8_t*) &header_rx[0], 4);
-	// uartReadMsg(UART_ID, &length, 1);
+	//uartReadMsg(UART_ID, &length, 1);
 	uartReadMsg(UART_ID, &answer, 1);
 
-	if (answer == DATA_OK){
-		r = IS_OK;
+	if (answer == KEEPALIVE_OK){
+		r = IS_KEEPALIVE;
+	} else if (answer == DATA_OK){
+		r = IS_DATA;
 	} else if (answer == DATA_FAIL){
 		r = IS_FAIL;
-	} else if (answer == KEEPALIVE_OK){
-		r = IS_KEEPALIVE;
 	} else {
 		r = IS_ERR;
 	}
@@ -186,31 +197,6 @@ void Data_IRQ(){
 	state = DATA_SEND;
 }
 
-void KeepAlive(){
-	uartWriteMsg(UART_ID, (uint8_t*) &keepalive_msg[0], sizeof(keepalive_msg));
-}
-
-uint8_t IsKeepAliveOk(){
-	
-	uint8_t r = false;
-	uint8_t header_rx[HEADER_LEN];
-	//uint8_t length;
-	uint8_t answer;
-
-	uartReadMsg(UART_ID, (uint8_t*) &header_rx[0], 4);
-	//uartReadMsg(UART_ID, &length, 1);
-	uartReadMsg(UART_ID, &answer, 1);
-
-	if (answer == KEEPALIVE_OK){
-		r = IS_OK;
-	} else if (answer == DATA_OK){
-		r = IS_DATA;
-	} else {
-		r = IS_ERR;
-	}
-
-	return r;
-}
 
 /*******************************************************************************
  ******************************************************************************/
