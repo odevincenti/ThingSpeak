@@ -158,7 +158,7 @@ uint8_t IsDataOk(){
 	
 	uint8_t r = false;
 	uint8_t header_rx[HEADER_LEN];
-	uint8_t length;
+	//uint8_t length;
 	uint8_t answer;
 
 	uartReadMsg(UART_ID, (uint8_t*) &header_rx[0], 4);

@@ -143,7 +143,7 @@ void FIFO_Reset(fifo_id_t id);
 void FIFO_ClearBuffer(fifo_id_t id);
 
 /**
- * @brief Stop using FIFO, it is not taken anymore
+ * @brief Stop using FIFO, so it is not taken anymore
  * 
  * @param id FIFO ID
  */
