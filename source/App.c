@@ -9,12 +9,9 @@
  ******************************************************************************/
 
 #include <stdint.h>
-#include "board.h"
-#include "gpio.h"
 #include "uart.h"
 #include "timer.h"
 #include "led.h"
-#include "fifo.h"
 
 /*******************************************************************************
  * CONSTANT AND MACRO DEFINITIONS USING #DEFINE
@@ -26,16 +23,16 @@
 #define DATA_FAIL	0xC1
 #define KEEPALIVE_OK	0x82
 // #define KEEPALIVE_OK	'2'
+#define RX_LENGTH	5
 
 #define KEEPALIVE_MS	1000
-#define DATA_MS			15500
+#define DATA_MS			16000
 
 #define PISO1_IDX		6
 #define PISO2_IDX		8
 #define PISO3_IDX		10
 
 enum {IS_OK, IS_FAIL, IS_ERR, IS_DATA, IS_KEEPALIVE};
-enum {IDLE, KEEPALIVE_SEND, DATA_SEND, CHECK_RX};
 
 #define GET_MSBYTE(x)	((uint8_t) ((x) >> 8) )
 #define GET_LSBYTE(x)	((uint8_t) (x) )
@@ -47,7 +44,8 @@ void Data_IRQ();
 void KeepAlive_IRQ();
 void SendData();
 void KeepAlive();
-uint8_t checkRX();
+void checkRX();
+uint8_t handle_RX();
 
 /*******************************************************************************
  * STATIC VARIABLES AND CONST VARIABLES WITH FILE LEVEL SCOPE
@@ -65,8 +63,6 @@ static tim_id_t data_timer;
 
 static bool keepalive_flag = false;
 static bool data_flag = false;
-
-static uint8_t state = IDLE;
 
 /*******************************************************************************
  *******************************************************************************
@@ -91,53 +87,13 @@ void App_Init (void)
 	data_timer = timerGetId();
 	timerStart(keepalive_timer, TIMER_MS2TICKS(KEEPALIVE_MS), TIM_MODE_PERIODIC, &KeepAlive_IRQ);
 	timerStart(data_timer, TIMER_MS2TICKS(DATA_MS), TIM_MODE_PERIODIC, &Data_IRQ);
-
-	state = DATA_SEND;
-
+	timerExec(data_timer);
 }
 
 /* Función que se llama constantemente en un ciclo infinito */
 void App_Run (void)
 {
-	switch (state){
-		case KEEPALIVE_SEND:
-			KeepAlive();
-			keepalive_flag = true;
-			state = state == KEEPALIVE_SEND ? CHECK_RX : state;
-			break;
-		case DATA_SEND:
-			SendData();
-			data_flag = true;
-			state = CHECK_RX;
-			break;
-		case CHECK_RX:
-			if (uartIsTxMsgComplete(UART_ID)){
-				uint8_t check = checkRX();
-				if (check == IS_KEEPALIVE && keepalive_flag){
-					keepalive_flag = false;
-					LedBlueOn();
-				} else if (check == IS_DATA && data_flag){
-					data_flag = false;
-					keepalive_flag = false;
-					LedGreenOn();
-				} else if (check == IS_FAIL && data_flag){
-					LedRedOn();
-					SendData();
-				} else if (keepalive_flag) {
-					LedOff();
-				} else if (data_flag){
-					SendData();
-				}
-				state = state == CHECK_RX ? IDLE : state;
-			}
-			break;
-		// case IDLE:
-		// 	if (keepalive_flag || data_flag){
-		// 		state = state == IDLE ? CHECK_RX: state;
-		// 	}
-		default:
-			break;
-	}	
+
 }
 
 /*******************************************************************************
@@ -155,14 +111,38 @@ void SendData(){
 	data_msg[PISO3_IDX] = GET_LSBYTE(piso3);
 	data_msg[PISO3_IDX + 1] = GET_MSBYTE(piso3);
 	uartWriteMsg(UART_ID, (uint8_t*) &data_msg[0], sizeof(data_msg));
-
 }
 
 void KeepAlive(){
+
 	uartWriteMsg(UART_ID, (uint8_t*) &keepalive_msg[0], sizeof(keepalive_msg));
 }
 
-uint8_t checkRX(){
+void checkRX(){
+
+	while ((keepalive_flag || data_flag) && uartGetRxMsgLength(UART_ID) < RX_LENGTH);	// Wait until all bytes are received
+
+	uint8_t check = handle_RX();						// Handle reception
+
+	if (check == IS_KEEPALIVE && keepalive_flag){		// Check KeepAliveOK
+		keepalive_flag = false;
+		LedBlueOn();
+	} else if (check == IS_DATA && data_flag){			// Check SendDataOK
+		data_flag = false;
+		keepalive_flag = false;
+		LedGreenOn();
+	} else if (check == IS_FAIL && data_flag){			// Check SendDataFail
+		LedRedOn();
+		SendData();		// Re-send data
+	} else if (keepalive_flag) {						// Check KeepAlive
+		LedOff();
+	} else if (data_flag){
+		SendData();
+	}
+}
+
+
+uint8_t handle_RX(){
 	
 	uint8_t r = false;
 	uint8_t header_rx[HEADER_LEN];
@@ -187,11 +167,17 @@ uint8_t checkRX(){
 }
 
 void KeepAlive_IRQ(){
-	state = state == IDLE ? KEEPALIVE_SEND : state;
+
+	KeepAlive();
+	keepalive_flag = true;
+	checkRX();
 }
 
 void Data_IRQ(){
-	state = DATA_SEND;
+
+	SendData();
+	data_flag = true;
+	checkRX();
 }
 
 
