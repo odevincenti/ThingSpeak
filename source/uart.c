@@ -167,14 +167,14 @@ uint8_t uartGetRxMsgLength(uint8_t id){
 }
 
 
-uint8_t uartReadMsg(uint8_t id, uint8_t* msg, uint8_t cant){
+uint8_t uartReadMsg(uint8_t id, char* msg, uint8_t cant){
 #ifdef UART_SAFE_MODE
 	if (id >= UART_ID_N){
 		return false;
 	}
 	else {
 #endif
-		size_t long_buff_rx = FIFO_ReadFromBuffer(rx_fifo[id], msg, cant);
+		size_t long_buff_rx = FIFO_ReadFromBuffer(rx_fifo[id], (uint8_t*) msg, cant);
 	return (long_buff_rx < cant) ? long_buff_rx : cant;
 #ifdef UART_SAFE_MODE
 	}
@@ -182,7 +182,7 @@ uint8_t uartReadMsg(uint8_t id, uint8_t* msg, uint8_t cant){
 }
 
 //mando la data
-uint8_t uartWriteMsg(uint8_t id, uint8_t* msg, uint8_t cant){
+uint8_t uartWriteMsg(uint8_t id, char* msg, uint8_t cant){
 #ifdef UART_SAFE_MODE
 	if (id >= UART_ID_N){
 		return 0;
@@ -190,7 +190,7 @@ uint8_t uartWriteMsg(uint8_t id, uint8_t* msg, uint8_t cant){
 	else {
 #endif
 		UART_Type* uart = UART_ptrs[id];
-		size_t long_buff_tx = FIFO_WriteToBuffer(tx_fifo[id], msg, cant);
+		size_t long_buff_tx = FIFO_WriteToBuffer(tx_fifo[id], (uint8_t*) msg, cant);
 		//HABILITO TRANSMISION
 		uart->C2 |= UART_C2_TIE_MASK;
 		return long_buff_tx;

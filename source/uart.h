@@ -87,7 +87,7 @@ uint8_t uartGetRxMsgLength(uint8_t id);
  * @param cant Desired quantity of bytes to be pasted
  * @return Real quantity of pasted bytes
 */
-uint8_t uartReadMsg(uint8_t id, uint8_t* msg, uint8_t cant);
+uint8_t uartReadMsg(uint8_t id, char* msg, uint8_t cant);
 
 /**
  * @brief Write a message to be transmitted. Non-Blocking
@@ -96,7 +96,7 @@ uint8_t uartReadMsg(uint8_t id, uint8_t* msg, uint8_t cant);
  * @param cant Desired quantity of bytes to be transfered
  * @return Real quantity of bytes to be transfered
 */
-uint8_t uartWriteMsg(uint8_t id, uint8_t* msg, uint8_t cant);
+uint8_t uartWriteMsg(uint8_t id, char* msg, uint8_t cant);
 
 /**
  * @brief Check if all bytes were transfered
